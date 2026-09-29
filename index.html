@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ROBO DELIVERY : หุ่นจิ๋วส่งของ ฝ่าด่านคำสั่ง</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        kanit: ['Kanit', 'sans-serif'],
+                        sarabun: ['Sarabun', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        robo: {
+                            dark: '#0f172a',
+                            panel: '#1e293b',
+                            border: '#334155',
+                            neonBlue: '#38bdf8',
+                            neonGreen: '#34d399',
+                            neonYellow: '#fbbf24',
+                            neonPink: '#f43f5e',
+                            neonPurple: '#c084fc'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #090d16;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, .font-heading {
+            font-family: 'Kanit', sans-serif;
+        }
+
+        /* Glassmorphism Panel Styling */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Grid Board Cells */
+        .grid-cell {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            transition: all 0.2s ease;
+        }
+
+        /* Smooth Robot Movement & Rotation */
+        .robot-icon {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.2s ease, left 0.2s ease;
+        }
+
+        /* Command Step Highlight */
+        .command-block.active-step {
+            border-color: #38bdf8 !important;
+            background-color: rgba(56, 189, 248, 0.25) !important;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+            transform: scale(1.02);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #38bdf8;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100">
+
+    <!-- HEADER NAVBAR -->
+    <header class="glass-panel sticky top-0 z-40 border-b border-sky-500/30 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-emerald-400 flex items-center justify-center text-slate-950 text-xl shadow-lg shadow-sky-500/30 font-bold">
+                    🤖
+                </div>
+                <div>
+                    <h1 class="font-heading font-extrabold text-lg sm:text-xl text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400 leading-none">
+                        ROBO DELIVERY
+                    </h1>
+                    <p class="text-[11px] text-sky-300/80 font-medium">หุ่นจิ๋วส่งของ ฝ่าด่านคำสั่ง • Computational Thinking</p>
+                </div>
+            </div>
+
+            <!-- Header Mode Navigation Buttons -->
+            <div class="flex items-center gap-2">
+                <button onclick="switchTab('game')" id="nav-btn-game" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-sky-500 text-slate-950 shadow-md transition hover:scale-105 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <span>เล่นเกม</span>
+                </button>
+                <button onclick="switchTab('editor')" id="nav-btn-editor" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-sky-400 transition hover:scale-105 flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>สร้างด่านเอง</span>
+                </button>
+                <button onclick="switchTab('guide')" id="nav-btn-guide" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-amber-400 transition hover:scale-105 flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>คู่มือ CT</span>
+                </button>
+                <button onclick="toggleAudio()" id="btn-audio-toggle" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-sky-400 text-xs transition" title="เปิด/ปิด เสียงสังเคราะห์">
+                    <i class="fa-solid fa-volume-high text-sky-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 flex flex-col gap-4">
+
+        <!-- TAB 1: MAIN GAMEPLAY MODE -->
+        <section id="view-game" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- LEFT COLUMN: Grid Board & Execution Controls -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                
+                <!-- Level Selector & Star Goal Banner -->
+                <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 border border-slate-700">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400 font-heading font-semibold">เลเวล:</span>
+                        <div id="level-buttons-container" class="flex flex-wrap gap-1.5">
+                            <!-- Level Buttons Injected Dynamically -->
+                        </div>
+                    </div>
+                    <!-- Target Block Efficiency -->
+                    <div class="flex items-center gap-3 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                        <span class="text-slate-400 font-heading">เป้าหมายดาว:</span>
+                        <div class="flex items-center gap-1 text-amber-400 font-bold font-mono">
+                            <i class="fa-solid fa-star"></i>
+                            <span id="target-block-count"><= 5 บล็อก</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5-Step Learning Loop Visual Tracker -->
+                <div class="grid grid-cols-5 gap-1 text-center text-[10px] sm:text-xs font-heading font-medium bg-slate-900/60 p-2 rounded-2xl border border-slate-800">
+                    <div id="loop-step-1" class="p-1 rounded-lg text-sky-400 font-bold bg-sky-950/60 border border-sky-500/40">1. สังเกต</div>
+                    <div id="loop-step-2" class="p-1 rounded-lg text-slate-400">2. วางแผน</div>
+                    <div id="loop-step-3" class="p-1 rounded-lg text-slate-400">3. เรียงคำสั่ง</div>
+                    <div id="loop-step-4" class="p-1 rounded-lg text-slate-400">4. ทดลองรัน</div>
+                    <div id="loop-step-5" class="p-1 rounded-lg text-slate-400">5. ตรวจสอบ</div>
+                </div>
+
+                <!-- Interactive Game Grid Matrix -->
+                <div class="glass-panel rounded-3xl p-4 sm:p-6 border border-sky-500/30 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div id="grid-container" class="grid gap-1.5 bg-slate-950/90 p-3 rounded-2xl border border-slate-800 shadow-2xl w-full max-w-[500px] aspect-square">
+                        <!-- Grid Cells Rendered Dynamically -->
+                    </div>
+
+                    <!-- Status Notification Banner -->
+                    <div id="game-status-banner" class="mt-3 px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-semibold bg-slate-900/90 text-sky-300 border border-sky-500/30 flex items-center gap-2 w-full justify-center text-center">
+                        <i class="fa-solid fa-circle-info text-sky-400"></i>
+                        <span id="status-text">ช่วยโรโบเก็บพัสดุ 📦 แล้วไปส่งที่จุดหมาย 📮</span>
+                    </div>
+                </div>
+
+                <!-- Control Buttons and Speed Regulator -->
+                <div class="glass-panel rounded-2xl p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="runProgram()" id="btn-run" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-95 font-heading font-extrabold text-sm text-slate-950 shadow-lg shadow-emerald-500/25 transition flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i>
+                            <span>รันคำสั่ง (Run)</span>
+                        </button>
+
+                        <button onclick="stepProgram()" id="btn-step" class="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 active:scale-95 font-heading font-bold text-xs sm:text-sm text-white border border-sky-400/50 shadow-md transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-forward-step"></i>
+                            <span>ทีละสเต็ป (Step)</span>
+                        </button>
+
+                        <button onclick="resetExecution()" id="btn-reset" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 font-heading font-bold text-xs text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>รีเซ็ต</span>
+                        </button>
+                    </div>
+
+                    <!-- Execution Speed Slider -->
+                    <div class="flex items-center gap-2 text-xs bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 font-heading"><i class="fa-solid fa-gauge-high text-amber-400"></i> ความเร็ว:</span>
+                        <input type="range" id="slider-speed" min="200" max="1000" step="100" value="500" class="w-20 accent-sky-400 cursor-pointer">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Command Blocks Workspace & Palette -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                
+                <!-- Command Block Palette -->
+                <div class="glass-panel rounded-2xl p-4 border border-slate-700 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <h3 class="font-heading font-bold text-sm text-sky-300 flex items-center gap-2">
+                            <i class="fa-solid fa-cubes text-sky-400"></i>
+                            <span>คลังบล็อกคำสั่ง (Command Palette)</span>
+                        </h3>
+                        <span class="text-[11px] text-slate-400">กดเพื่อเพิ่มลงลำดับ</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2 text-xs font-heading font-semibold">
+                        <button onclick="addCommand('FORWARD')" class="p-2.5 rounded-xl bg-sky-950/80 border border-sky-500/50 hover:bg-sky-900 hover:border-sky-400 text-sky-200 transition flex items-center gap-2 shadow-sm active:scale-95">
+                            <span class="w-6 h-6 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400">⬆️</span>
+                            <span>เดินหน้า</span>
+                        </button>
+
+                        <button onclick="addCommand('TURN_RIGHT')" class="p-2.5 rounded-xl bg-purple-950/80 border border-purple-500/50 hover:bg-purple-900 hover:border-purple-400 text-purple-200 transition flex items-center gap-2 shadow-sm active:scale-95">
+                            <span class="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">↪️</span>
+                            <span>เลี้ยวขวา</span>
+                        </button>
+
+                        <button onclick="addCommand('TURN_LEFT')" class="p-2.5 rounded-xl bg-purple-950/80 border border-purple-500/50 hover:bg-purple-900 hover:border-purple-400 text-purple-200 transition flex items-center gap-2 shadow-sm active:scale-95">
+                            <span class="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">↩️</span>
+                            <span>เลี้ยวซ้าย</span>
+                        </button>
+
+                        <button onclick="addCommand('PICK')" class="p-2.5 rounded-xl bg-amber-950/80 border border-amber-500/50 hover:bg-amber-900 hover:border-amber-400 text-amber-200 transition flex items-center gap-2 shadow-sm active:scale-95">
+                            <span class="w-6 h-6 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">📦</span>
+                            <span>เก็บพัสดุ</span>
+                        </button>
+
+                        <button onclick="addCommand('DELIVER')" class="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 hover:bg-emerald-900 hover:border-emerald-400 text-emerald-200 transition flex items-center gap-2 shadow-sm active:scale-95">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">📮</span>
+                            <span>ส่งพัสดุ</span>
+                        </button>
+
+                        <button onclick="addCommand('LOOP_3')" class="p-2.5 rounded-xl bg-rose-950/80 border border-rose-500/50 hover:bg-rose-900 hover:border-rose-400 text-rose-200 transition flex items-center gap-2 shadow-sm active:scale-95">
+                            <span class="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400">🔁</span>
+                            <span>วนซ้ำ 3 รอบ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Program Queue (Sequence List) -->
+                <div class="glass-panel rounded-2xl p-4 border border-sky-500/30 flex-1 flex flex-col justify-between space-y-3 min-h-[320px]">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-heading font-bold text-sm text-sky-300 flex items-center gap-2">
+                                <i class="fa-solid fa-code text-teal-400"></i>
+                                <span>ลำดับคำสั่ง (Program Queue)</span>
+                            </h3>
+                            <span id="block-counter" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 font-mono font-bold">0 บล็อก</span>
+                        </div>
+
+                        <button onclick="clearCommands()" class="text-xs font-heading font-medium text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>ล้างทั้งหมด</span>
+                        </button>
+                    </div>
+
+                    <!-- List of Command Blocks -->
+                    <div id="program-sequence-list" class="flex-1 space-y-2 overflow-y-auto max-h-[360px] p-1">
+                        <!-- Command Cards Injected Dynamically -->
+                    </div>
+
+                    <!-- Debugging & Tips Footnote -->
+                    <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800 text-xs text-slate-400 flex items-start gap-2 font-sarabun">
+                        <i class="fa-solid fa-bug text-amber-400 mt-0.5"></i>
+                        <span><strong>เคล็ดลับแก้บั๊ก (Debugging):</strong> หากหุ่นชนหรือทำงานไม่ถูกต้อง ให้ใช้ปุ่ม "ทีละสเต็ป (Step)" เพื่อสังเกตตำแหน่งที่คำสั่งผิดพลาดแล้วแก้ไขลบออกเฉพาะจุด!</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- TAB 2: LEVEL EDITOR MODE -->
+        <section id="view-editor" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Left: Grid Palette & Canvas -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="glass-panel rounded-2xl p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="font-heading font-bold text-base text-sky-300">🛠️ โหมดสร้างด่านเอง (Level Editor)</h2>
+                        <p class="text-xs text-slate-400">เลือกเครื่องมือด้านขวา แล้วคลิกบนตารางเพื่อวางองค์ประกอบด่านของคุณ</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="clearCustomGrid()" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-heading text-rose-300 border border-slate-700 hover:bg-slate-700 transition">ล้างตาราง</button>
+                        <button onclick="testCustomLevel()" class="px-4 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-heading font-bold text-xs hover:bg-emerald-400 shadow-md transition">ทดลองเล่นด่านนี้</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-3xl p-6 border border-sky-500/30 flex flex-col items-center justify-center">
+                    <div id="editor-grid-container" class="grid gap-1.5 bg-slate-950/90 p-3 rounded-2xl border border-slate-800 shadow-2xl w-full max-w-[480px] aspect-square">
+                        <!-- Editor Interactive Grid -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Object Selector Tools -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                <div class="glass-panel rounded-2xl p-5 border border-slate-700 space-y-4">
+                    <h3 class="font-heading font-bold text-sm text-sky-300 border-b border-slate-800 pb-2">เลือกเครื่องมือวางวัตถุ</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-heading font-semibold">
+                        <button onclick="setEditorTool('ROBOT')" id="tool-btn-ROBOT" class="p-3 rounded-xl bg-sky-950 border-2 border-sky-400 text-sky-300 flex items-center gap-3">
+                            <span class="text-2xl">🤖</span>
+                            <div class="text-left">
+                                <div>หุ่นยนต์ (Start)</div>
+                                <div class="text-[10px] text-slate-400 font-normal">จุดเริ่มต้นหุ่นยนต์</div>
+                            </div>
+                        </button>
+
+                        <button onclick="setEditorTool('WALL')" id="tool-btn-WALL" class="p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-3">
+                            <span class="text-2xl">🧱</span>
+                            <div class="text-left">
+                                <div>สิ่งกีดขวาง (Wall)</div>
+                                <div class="text-[10px] text-slate-400 font-normal">กำแพงกั้นทาง</div>
+                            </div>
+                        </button>
+
+                        <button onclick="setEditorTool('PARCEL')" id="tool-btn-PARCEL" class="p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-3">
+                            <span class="text-2xl">📦</span>
+                            <div class="text-left">
+                                <div>พัสดุ (Parcel)</div>
+                                <div class="text-[10px] text-slate-400 font-normal">สิ่งของที่ต้องเก็บ</div>
+                            </div>
+                        </button>
+
+                        <button onclick="setEditorTool('DELIVERY')" id="tool-btn-DELIVERY" class="p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-3">
+                            <span class="text-2xl">📮</span>
+                            <div class="text-left">
+                                <div>จุดส่งของ (Target)</div>
+                                <div class="text-[10px] text-slate-400 font-normal">เป้าหมายปลายทาง</div>
+                            </div>
+                        </button>
+
+                        <button onclick="setEditorTool('ERASER')" id="tool-btn-ERASER" class="p-3 rounded-xl bg-slate-900 border border-slate-700 text-rose-300 flex items-center gap-3">
+                            <span class="text-2xl">🧽</span>
+                            <div class="text-left">
+                                <div>ยางลบ (Eraser)</div>
+                                <div class="text-[10px] text-slate-400 font-normal">ลบให้เป็นช่องว่าง</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1">
+                        <div class="font-bold text-sky-400">เงื่อนไขการสร้างด่านสมบูรณ์:</div>
+                        <ul class="list-disc list-inside space-y-0.5 text-[11px]">
+                            <li>ต้องมีหุ่นยนต์ 🤖 อย่างน้อย 1 ตัว</li>
+                            <li>ต้องมีพัสดุ 📦 อย่างน้อย 1 ชิ้น</li>
+                            <li>ต้องมีจุดส่งของ 📮 อย่างน้อย 1 จุด</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: COMPUTATIONAL THINKING GUIDE -->
+        <section id="view-guide" class="hidden space-y-5">
+            <div class="glass-panel rounded-3xl p-6 border border-sky-500/30 text-center space-y-2">
+                <div class="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-500 text-white text-3xl shadow-lg">
+                    🧠
+                </div>
+                <h2 class="font-heading font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400">
+                    คู่มือแนวคิดเชิงคำนวณ (Computational Thinking)
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto">
+                    สรุป 4 เสาหลักของการคิดเชิงคำนวณและการแก้ปัญหาอย่างเป็นระบบ เพื่อผู้เรียนและครูผู้สอน
+                </p>
+            </div>
+
+            <!-- 4 Pillars Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Pillar 1 -->
+                <div class="glass-panel rounded-2xl p-5 border border-sky-500/30 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-heading font-extrabold text-lg border border-sky-400/30">1</div>
+                        <h3 class="font-heading font-bold text-base text-sky-300">Decomposition (การย่อยปัญหา)</h3>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed font-sarabun">
+                        การแบ่งปัญหาใหญ่ออกเป็นปัญหาย่อยๆ เพื่อย่อยกระบวนการให้จัดการทีละสเต็ปได้ง่ายขึ้น
+                    </p>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs text-sky-300/90 font-mono">
+                        💡 <strong>ในเกมนี้:</strong> ย่อยภารกิจส่งของออกเป็น: เดินหน้าหาพัสดุ ➔ กดเก็บพัสดุ 📦 ➔ เลี้ยวหลบสิ่งกีดขวาง ➔ เดินหน้าหาเป้าหมาย ➔ กดส่งพัสดุ 📮
+                    </div>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div class="glass-panel rounded-2xl p-5 border border-purple-500/30 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-heading font-extrabold text-lg border border-purple-400/30">2</div>
+                        <h3 class="font-heading font-bold text-base text-purple-300">Pattern Recognition (การจดจำรูปแบบ)</h3>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed font-sarabun">
+                        การมองหาความเหมือน รูปแบบพฤติกรรม หรือชุดคำสั่งที่เกิดขึ้นซ้ำๆ
+                    </p>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs text-purple-300/90 font-mono">
+                        💡 <strong>ในเกมนี้:</strong> มองหาคำสั่งที่ต้องทำซ้ำๆ เช่น "เดินหน้า 3 ครั้ง" และเปลี่ยนไปใช้คำสั่ง 🔁 Loop (วนซ้ำ) เพื่อลดจำนวนบล็อกคำสั่งให้กระชับ
+                    </div>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div class="glass-panel rounded-2xl p-5 border border-amber-500/30 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-heading font-extrabold text-lg border border-amber-400/30">3</div>
+                        <h3 class="font-heading font-bold text-base text-amber-300">Abstraction (การคิดเชิงนามธรรม)</h3>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed font-sarabun">
+                        การคัดเลือกเฉพาะข้อมูลที่สำคัญต่อการแก้ปัญหา และตัดรายละเอียดที่ไม่เกี่ยวข้องออกไป
+                    </p>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs text-amber-300/90 font-mono">
+                        💡 <strong>ในเกมนี้:</strong> โฟกัสเฉพาะระยะทาง ทิศทาง และพิกัดสิ่งกีดขวางในตาราง matrix โดยไม่ต้องกังวลปัจจัยภายนอกที่ไม่เกี่ยวกับอัลกอริทึม
+                    </div>
+                </div>
+
+                <!-- Pillar 4 -->
+                <div class="glass-panel rounded-2xl p-5 border border-emerald-500/30 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-heading font-extrabold text-lg border border-emerald-400/30">4</div>
+                        <h3 class="font-heading font-bold text-base text-emerald-300">Algorithm Design (การออกแบบอัลกอริทึม)</h3>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed font-sarabun">
+                        การกำหนดลำดับขั้นตอนคำสั่งอย่างชัดเจน เป็นลำดับขั้น (Sequence) เพื่อให้คอมพิวเตอร์ประมวลผลได้อย่างแม่นยำ
+                    </p>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs text-emerald-300/90 font-mono">
+                        💡 <strong>ในเกมนี้:</strong> การนำบล็อกคำสั่งมาเรียงต่อกันใน Queue อย่างเป็นลำดับ และการตรวจสอบแก้ไขบั๊ก (Debugging) ผ่านการรันทีละสเต็ป
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- VICTORY CELEBRATION MODAL -->
+    <div id="modal-victory" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel max-w-md w-full rounded-3xl p-6 sm:p-8 border-2 border-emerald-400/50 text-center space-y-5 shadow-2xl">
+            
+            <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-emerald-400 rounded-3xl mx-auto flex items-center justify-center text-4xl shadow-lg shadow-emerald-500/30 animate-bounce">
+                🏆
+            </div>
+
+            <div class="space-y-1">
+                <h3 class="font-heading font-extrabold text-2xl text-white">ภารกิจสำเร็จ!</h3>
+                <p id="victory-level-title" class="text-xs text-sky-300">ผ่านด่านเรียบร้อยแล้ว</p>
+            </div>
+
+            <!-- Star Rating Evaluation -->
+            <div class="py-2 flex items-center justify-center gap-3 text-3xl">
+                <i id="star-1" class="fa-solid fa-star text-slate-700"></i>
+                <i id="star-2" class="fa-solid fa-star text-slate-700"></i>
+                <i id="star-3" class="fa-solid fa-star text-slate-700"></i>
+            </div>
+
+            <div id="victory-stat-box" class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 font-sarabun space-y-1">
+                <!-- Stat details injected via JS -->
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeVictoryModal(); resetExecution();" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 font-heading font-bold text-xs text-slate-300 border border-slate-700 transition">
+                    ลองใหม่อีกครั้ง
+                </button>
+                <button onclick="nextLevel()" class="py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 font-heading font-extrabold text-xs text-slate-950 shadow-md transition">
+                    ไปด่านถัดไป ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ======================================================================
+         * 1. GLOBAL STATE & GAME DATA
+         * ====================================================================== */
+        let currentTab = 'game';
+        let currentLevelIndex = 0;
+        let isExecuting = false;
+        let executionStepIndex = 0;
+        let executionQueue = [];
+        let executionTimer = null;
+        let soundEnabled = true;
+
+        // Grid Matrix Configuration (6x6)
+        const GRID_SIZE = 6;
+        let gridState = []; 
+
+        // Robot State
+        let robot = {
+            r: 0,
+            c: 0,
+            dir: 1, // Directions: 0: North, 1: East, 2: South, 3: West
+            hasParcel: false
+        };
+
+        // User Commands Queue
+        let commands = [];
+
+        // Level Editor Canvas State
+        let editorTool = 'ROBOT';
+        let customGrid = [];
+
+        /* ======================================================================
+         * 2. PRE-BUILT LEVEL DESIGNS (LEVELS 1-5)
+         * ====================================================================== */
+        const PREBUILT_LEVELS = [
+            {
+                id: 1,
+                name: "ด่านที่ 1: การส่งพัสดุพื้นฐาน",
+                desc: "เรียนรู้ลำดับคำสั่งเบื้องต้น: เดินหน้าไปเก็บพัสดุ 📦 แล้วมุ่งหน้าไปส่งที่จุดหมาย 📮",
+                star3Count: 5,
+                star2Count: 7,
+                robot: { r: 5, c: 1, dir: 0 }, // Facing North
+                parcels: [{ r: 3, c: 1 }],
+                deliveries: [{ r: 1, c: 1 }],
+                walls: [{ r: 2, c: 0 }, { r: 2, c: 2 }, { r: 4, c: 2 }]
+            },
+            {
+                id: 2,
+                name: "ด่านที่ 2: การเลี้ยวหลบสิ่งกีดขวาง",
+                desc: "วางแผนทิศทางและเลี้ยวหลบสิ่งกีดขวาง 🧱 เพื่อเก็บพัสดุและส่งอย่างปลอดภัย",
+                star3Count: 8,
+                star2Count: 11,
+                robot: { r: 5, c: 0, dir: 1 }, // Facing East
+                parcels: [{ r: 5, c: 4 }],
+                deliveries: [{ r: 1, c: 4 }],
+                walls: [
+                    { r: 4, c: 1 }, { r: 4, c: 2 }, { r: 4, c: 3 },
+                    { r: 3, c: 4 }, { r: 2, c: 4 }
+                ]
+            },
+            {
+                id: 3,
+                name: "ด่านที่ 3: พัสดุหลายชิ้น (Decomposition)",
+                desc: "แบ่งภารกิจ: เก็บและส่งพัสดุชิ้นแรก จากนั้นไปเก็บชิ้นที่สองเพื่อนำไปส่งจุดหมายที่สอง!",
+                star3Count: 11,
+                star2Count: 15,
+                robot: { r: 0, c: 0, dir: 1 },
+                parcels: [{ r: 0, c: 3 }, { r: 3, c: 5 }],
+                deliveries: [{ r: 3, c: 3 }, { r: 5, c: 5 }],
+                walls: [
+                    { r: 1, c: 1 }, { r: 1, c: 2 }, { r: 1, c: 3 },
+                    { r: 4, c: 3 }, { r: 4, c: 4 }
+                ]
+            },
+            {
+                id: 4,
+                name: "ด่านที่ 4: สวิตช์และประตูมิติ",
+                desc: "เดินไปเหยียบสวิตช์ 🔘 เพื่อเปิดประตู 🚪 ปลดล็อกเส้นทางไปสู่พัสดุ",
+                star3Count: 10,
+                star2Count: 14,
+                robot: { r: 5, c: 0, dir: 0 },
+                parcels: [{ r: 1, c: 5 }],
+                deliveries: [{ r: 5, c: 5 }],
+                switches: [{ r: 3, c: 0, isPressed: false }],
+                doors: [{ r: 1, c: 3, isOpen: false }],
+                walls: [
+                    { r: 0, c: 3 }, { r: 2, c: 3 }, { r: 3, c: 3 }, { r: 4, c: 3 }
+                ]
+            },
+            {
+                id: 5,
+                name: "ด่านที่ 5: การประยุกต์ใช้ Loop (วนซ้ำ)",
+                desc: "ตรวจจับรูปแบบ (Pattern Recognition) และใช้บล็อก 🔁 วนซ้ำ เพื่อย่อลำดับคำสั่งให้กระชับที่สุด",
+                star3Count: 4,
+                star2Count: 7,
+                robot: { r: 5, c: 0, dir: 1 },
+                parcels: [{ r: 5, c: 3 }],
+                deliveries: [{ r: 2, c: 3 }],
+                walls: [
+                    { r: 4, c: 1 }, { r: 4, c: 2 }, { r: 3, c: 2 }
+                ]
+            }
+        ];
+
+        /* ======================================================================
+         * 3. WEB AUDIO API SYNTHESIZER
+         * ====================================================================== */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSynthSound(type) {
+            if (!soundEnabled) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'step') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(540, now + 0.08);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'turn') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(250, now + 0.08);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'pick') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'deliver') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(659.25, now); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.1); // G5
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'crash') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(60, now + 0.25);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.12); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.24); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.36); // C6
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('btn-audio-toggle');
+            btn.innerHTML = soundEnabled 
+                ? '<i class="fa-solid fa-volume-high text-sky-400"></i>' 
+                : '<i class="fa-solid fa-volume-xmark text-rose-400"></i>';
+        }
+
+        /* ======================================================================
+         * 4. UI TAB SWITCHING & INITIALIZATION
+         * ====================================================================== */
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-editor').classList.add('hidden');
+            document.getElementById('view-guide').classList.add('hidden');
+
+            document.getElementById('nav-btn-game').className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-slate-800 text-slate-300 border border-slate-700 transition";
+            document.getElementById('nav-btn-editor').className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-slate-800 text-slate-300 border border-slate-700 transition";
+            document.getElementById('nav-btn-guide').className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-slate-800 text-slate-300 border border-slate-700 transition";
+
+            if (tab === 'game') {
+                document.getElementById('view-game').classList.remove('hidden');
+                document.getElementById('nav-btn-game').className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-sky-500 text-slate-950 shadow-md transition";
+            } else if (tab === 'editor') {
+                document.getElementById('view-editor').classList.remove('hidden');
+                document.getElementById('nav-btn-editor').className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-emerald-500 text-slate-950 shadow-md transition";
+                initEditorGrid();
+            } else if (tab === 'guide') {
+                document.getElementById('view-guide').classList.remove('hidden');
+                document.getElementById('nav-btn-guide').className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-heading font-bold bg-amber-500 text-slate-950 shadow-md transition";
+            }
+        }
+
+        /* ======================================================================
+         * 5. GAME BOARD & LEVEL LOADING
+         * ====================================================================== */
+        function initLevelButtons() {
+            const container = document.getElementById('level-buttons-container');
+            container.innerHTML = '';
+            PREBUILT_LEVELS.forEach((lvl, idx) => {
+                const isActive = idx === currentLevelIndex;
+                const btn = document.createElement('button');
+                btn.className = `px-2.5 py-1 rounded-lg text-xs font-heading font-bold transition ${
+                    isActive 
+                    ? 'bg-sky-500 text-slate-950 shadow-md' 
+                    : 'bg-slate-800 text-slate-300 border border-slate-700 hover:border-sky-400'
+                }`;
+                btn.innerText = `Lvl ${lvl.id}`;
+                btn.onclick = () => loadLevel(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function loadLevel(levelIndex) {
+            currentLevelIndex = levelIndex;
+            initLevelButtons();
+            resetExecution();
+
+            const lvl = PREBUILT_LEVELS[levelIndex];
+            document.getElementById('target-block-count').innerText = `<= ${lvl.star3Count} บล็อก`;
+            document.getElementById('status-text').innerText = lvl.desc;
+
+            // Deep clone level grid state
+            gridState = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill('EMPTY'));
+
+            // Set Walls
+            if (lvl.walls) lvl.walls.forEach(w => gridState[w.r][w.c] = 'WALL');
+            // Set Parcels
+            if (lvl.parcels) lvl.parcels.forEach(p => gridState[p.r][p.c] = 'PARCEL');
+            // Set Deliveries
+            if (lvl.deliveries) lvl.deliveries.forEach(d => gridState[d.r][d.c] = 'DELIVERY');
+            // Set Switches & Doors
+            if (lvl.switches) lvl.switches.forEach(s => gridState[s.r][s.c] = s.isPressed ? 'SWITCH_PRESSED' : 'SWITCH');
+            if (lvl.doors) lvl.doors.forEach(d => gridState[d.r][d.c] = d.isOpen ? 'DOOR_OPEN' : 'DOOR_CLOSED');
+
+            // Set Robot Initial State
+            robot = {
+                r: lvl.robot.r,
+                c: lvl.robot.c,
+                dir: lvl.robot.dir,
+                hasParcel: false
+            };
+
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('grid-container');
+            container.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+            container.style.gridTemplateRows = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+            container.innerHTML = '';
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'grid-cell rounded-xl bg-slate-900 border border-slate-800/80 flex items-center justify-center text-xl sm:text-2xl relative overflow-hidden';
+                    
+                    const item = gridState[r][c];
+
+                    if (item === 'WALL') {
+                        cellDiv.className += ' bg-slate-800 border-slate-700';
+                        cellDiv.innerHTML = '<span class="drop-shadow-md">🧱</span>';
+                    } else if (item === 'PARCEL') {
+                        cellDiv.innerHTML = '<span class="animate-bounce drop-shadow-md">📦</span>';
+                    } else if (item === 'DELIVERY') {
+                        cellDiv.className += ' bg-emerald-950/40 border-emerald-500/30';
+                        cellDiv.innerHTML = '<span class="drop-shadow-md">📮</span>';
+                    } else if (item === 'SWITCH') {
+                        cellDiv.className += ' bg-amber-950/40 border-amber-500/30';
+                        cellDiv.innerHTML = '<span class="drop-shadow-md">🔘</span>';
+                    } else if (item === 'SWITCH_PRESSED') {
+                        cellDiv.className += ' bg-emerald-950/40 border-emerald-500/30';
+                        cellDiv.innerHTML = '<span class="drop-shadow-md">🟢</span>';
+                    } else if (item === 'DOOR_CLOSED') {
+                        cellDiv.className += ' bg-rose-950/50 border-rose-500/40';
+                        cellDiv.innerHTML = '<span class="drop-shadow-md">🚪</span>';
+                    } else if (item === 'DOOR_OPEN') {
+                        cellDiv.className += ' bg-slate-900 border-slate-800';
+                        cellDiv.innerHTML = '<span class="opacity-40 text-sm">🔓</span>';
+                    }
+
+                    // Render Robot on top if position matches
+                    if (robot.r === r && robot.c === c) {
+                        const robotEl = document.createElement('div');
+                        robotEl.className = 'robot-icon absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl z-10';
+                        
+                        // Rotation Angles: 0: North(0deg), 1: East(90deg), 2: South(180deg), 3: West(270deg)
+                        const angles = [0, 90, 180, 270];
+                        robotEl.style.transform = `rotate(${angles[robot.dir]}deg)`;
+                        
+                        robotEl.innerHTML = robot.hasParcel ? '🤖<span class="absolute -top-1 -right-1 text-xs">📦</span>' : '🤖';
+                        cellDiv.appendChild(robotEl);
+                    }
+
+                    container.appendChild(cellDiv);
+                }
+            }
+        }
+
+        /* ======================================================================
+         * 6. COMMAND PALETTE & WORKSPACE QUEUE
+         * ====================================================================== */
+        function addCommand(type) {
+            if (isExecuting) return;
+            playSynthSound('step');
+            commands.push({ id: Date.now() + Math.random(), type });
+            updateCommandUI();
+            updateStepLoopTracker(3); // Step 3: Order commands
+        }
+
+        function removeCommand(index) {
+            if (isExecuting) return;
+            playSynthSound('step');
+            commands.splice(index, 1);
+            updateCommandUI();
+        }
+
+        function moveCommand(index, dir) {
+            if (isExecuting) return;
+            const newIndex = index + dir;
+            if (newIndex < 0 || newIndex >= commands.length) return;
+            playSynthSound('step');
+            const temp = commands[index];
+            commands[index] = commands[newIndex];
+            commands[newIndex] = temp;
+            updateCommandUI();
+        }
+
+        function clearCommands() {
+            if (isExecuting) return;
+            playSynthSound('step');
+            commands = [];
+            updateCommandUI();
+        }
+
+        function updateCommandUI() {
+            const listContainer = document.getElementById('program-sequence-list');
+            const counter = document.getElementById('block-counter');
+            counter.innerText = `${commands.length} บล็อก`;
+            listContainer.innerHTML = '';
+
+            if (commands.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="h-40 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-500 text-xs gap-2">
+                        <i class="fa-solid fa-arrow-up-from-bracket text-lg"></i>
+                        <span>คลิกเลือกบล็อกคำสั่งจากคลังด้านบน</span>
+                    </div>
+                `;
+                return;
+            }
+
+            commands.forEach((cmd, idx) => {
+                const card = document.createElement('div');
+                card.id = `cmd-block-${idx}`;
+                card.className = "command-block p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs font-heading font-semibold transition";
+
+                let icon = "⬆️";
+                let label = "เดินหน้า (Move Forward)";
+                let badgeBg = "bg-sky-500/20 text-sky-400 border-sky-500/30";
+
+                if (cmd.type === 'TURN_RIGHT') {
+                    icon = "↪️"; label = "เลี้ยวขวา (Turn Right)"; badgeBg = "bg-purple-500/20 text-purple-400 border-purple-500/30";
+                } else if (cmd.type === 'TURN_LEFT') {
+                    icon = "↩️"; label = "เลี้ยวซ้าย (Turn Left)"; badgeBg = "bg-purple-500/20 text-purple-400 border-purple-500/30";
+                } else if (cmd.type === 'PICK') {
+                    icon = "📦"; label = "เก็บพัสดุ (Pick Parcel)"; badgeBg = "bg-amber-500/20 text-amber-400 border-amber-500/30";
+                } else if (cmd.type === 'DELIVER') {
+                    icon = "📮"; label = "ส่งพัสดุ (Deliver Parcel)"; badgeBg = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+                } else if (cmd.type === 'LOOP_3') {
+                    icon = "🔁"; label = "วนซ้ำ 3 รอบ (Loop 3x)"; badgeBg = "bg-rose-500/20 text-rose-400 border-rose-500/30";
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-6 h-6 rounded-lg font-mono text-[11px] font-bold bg-slate-800 text-slate-400 flex items-center justify-center">${idx + 1}</span>
+                        <span class="p-1 rounded-md ${badgeBg} border">${icon}</span>
+                        <span class="text-slate-200">${label}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="moveCommand(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 p-1 text-slate-600"' : 'class="p-1 text-slate-400 hover:text-sky-400"'}>
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                        <button onclick="moveCommand(${idx}, 1)" ${idx === commands.length - 1 ? 'disabled class="opacity-30 p-1 text-slate-600"' : 'class="p-1 text-slate-400 hover:text-sky-400"'}>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <button onclick="removeCommand(${idx})" class="text-slate-500 hover:text-rose-400 p-1 text-xs ml-1">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        /* ======================================================================
+         * 7. EXECUTION ENGINE & STEP DEBUGGER
+         * ====================================================================== */
+        function flattenCommands(cmdList) {
+            let result = [];
+            cmdList.forEach(cmd => {
+                if (cmd.type === 'LOOP_3') {
+                    // Loop repeats the preceding command 3 times or defaults to 3 forward moves
+                    const prevCmd = result.length > 0 ? result[result.length - 1] : { type: 'FORWARD' };
+                    result.push({ type: prevCmd.type }, { type: prevCmd.type });
+                } else {
+                    result.push(cmd);
+                }
+            });
+            return result;
+        }
+
+        function runProgram() {
+            if (commands.length === 0) {
+                setStatus("⚠️ กรุณาเพิ่มบล็อกคำสั่งอย่างน้อย 1 บล็อก!", "error");
+                return;
+            }
+            if (isExecuting) return;
+
+            resetRobotStateOnly();
+            isExecuting = true;
+            executionStepIndex = 0;
+            executionQueue = flattenCommands(commands);
+
+            document.getElementById('btn-run').disabled = true;
+            updateStepLoopTracker(4); // Step 4: Test Run
+
+            const speed = 1200 - parseInt(document.getElementById('slider-speed').value);
+            executionTimer = setInterval(() => {
+                executeNextStep();
+            }, speed);
+        }
+
+        function stepProgram() {
+            if (commands.length === 0) {
+                setStatus("⚠️ กรุณาเพิ่มบล็อกคำสั่งอย่างน้อย 1 บล็อก!", "error");
+                return;
+            }
+
+            if (!isExecuting) {
+                resetRobotStateOnly();
+                isExecuting = true;
+                executionStepIndex = 0;
+                executionQueue = flattenCommands(commands);
+                updateStepLoopTracker(4);
+            }
+
+            executeNextStep();
+        }
+
+        function executeNextStep() {
+            if (executionStepIndex >= executionQueue.length) {
+                stopExecution();
+                checkVictoryCondition();
+                return;
+            }
+
+            highlightActiveBlock(executionStepIndex);
+
+            const cmd = executionQueue[executionStepIndex];
+            executionStepIndex++;
+
+            let success = true;
+            if (cmd.type === 'FORWARD') success = moveRobotForward();
+            else if (cmd.type === 'TURN_RIGHT') turnRobot(1);
+            else if (cmd.type === 'TURN_LEFT') turnRobot(-1);
+            else if (cmd.type === 'PICK') pickParcel();
+            else if (cmd.type === 'DELIVER') deliverParcel();
+
+            renderGrid();
+
+            if (!success) {
+                stopExecution();
+                playSynthSound('crash');
+                setStatus("💥 หุ่นยนต์ชนสิ่งกีดขวางหรือขอบตาราง! แก้ไขคำสั่งแล้วลองใหม่", "error");
+                updateStepLoopTracker(5); // Step 5: Debugging
+            }
+        }
+
+        function highlightActiveBlock(index) {
+            document.querySelectorAll('.command-block').forEach((el, i) => {
+                if (i === index) el.classList.add('active-step');
+                else el.classList.remove('active-step');
+            });
+        }
+
+        function moveRobotForward() {
+            playSynthSound('step');
+            // Direction vectors: 0: North (-r), 1: East (+c), 2: South (+r), 3: West (-c)
+            const dr = [-1, 0, 1, 0];
+            const dc = [0, 1, 0, -1];
+
+            const nr = robot.r + dr[robot.dir];
+            const nc = robot.c + dc[robot.dir];
+
+            // Boundary Check
+            if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) return false;
+
+            const targetCell = gridState[nr][nc];
+            // Obstacle or Closed Door collision check
+            if (targetCell === 'WALL' || targetCell === 'DOOR_CLOSED') return false;
+
+            // Move Robot
+            robot.r = nr;
+            robot.c = nc;
+
+            // Switch Collision / Activation Check
+            if (targetCell === 'SWITCH') {
+                gridState[nr][nc] = 'SWITCH_PRESSED';
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        if (gridState[r][c] === 'DOOR_CLOSED') gridState[r][c] = 'DOOR_OPEN';
+                    }
+                }
+                playSynthSound('deliver');
+                setStatus("🔘 เหยียบสวิตช์เปิดประตูเรียบร้อย!", "success");
+            }
+
+            return true;
+        }
+
+        function turnRobot(dirDelta) {
+            playSynthSound('turn');
+            robot.dir = (robot.dir + dirDelta + 4) % 4;
+        }
+
+        function pickParcel() {
+            if (gridState[robot.r][robot.c] === 'PARCEL') {
+                gridState[robot.r][robot.c] = 'EMPTY';
+                robot.hasParcel = true;
+                playSynthSound('pick');
+                setStatus("📦 เก็บพัสดุเรียบร้อย! มุ่งหน้าไปจุดส่งของ", "success");
+            } else {
+                setStatus("⚠️ ไม่พบพัสดุในช่องนี้!", "warning");
+            }
+        }
+
+        function deliverParcel() {
+            if (gridState[robot.r][robot.c] === 'DELIVERY' && robot.hasParcel) {
+                robot.hasParcel = false;
+                playSynthSound('deliver');
+                setStatus("📮 ส่งพัสดุสำเร็จ!", "success");
+            } else if (!robot.hasParcel) {
+                setStatus("⚠️ หุ่นยนต์ยังไม่ได้เก็บพัสดุ!", "warning");
+            }
+        }
+
+        function checkVictoryCondition() {
+            let parcelsLeft = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (gridState[r][c] === 'PARCEL') parcelsLeft++;
+                }
+            }
+
+            if (parcelsLeft === 0 && !robot.hasParcel) {
+                playSynthSound('win');
+                updateStepLoopTracker(5);
+                triggerVictoryModal();
+            } else {
+                setStatus("❌ ยังส่งพัสดุไม่ครบทุกชิ้น! ลองปรับปรุงลำดับคำสั่งใหม่", "warning");
+            }
+        }
+
+        function stopExecution() {
+            clearInterval(executionTimer);
+            isExecuting = false;
+            document.getElementById('btn-run').disabled = false;
+            highlightActiveBlock(-1);
+        }
+
+        function resetExecution() {
+            stopExecution();
+            loadLevel(currentLevelIndex);
+            updateStepLoopTracker(1);
+        }
+
+        function resetRobotStateOnly() {
+            const lvl = PREBUILT_LEVELS[currentLevelIndex];
+            robot = { r: lvl.robot.r, c: lvl.robot.c, dir: lvl.robot.dir, hasParcel: false };
+            renderGrid();
+        }
+
+        function setStatus(msg, type = "info") {
+            const banner = document.getElementById('game-status-banner');
+            const text = document.getElementById('status-text');
+            text.innerText = msg;
+
+            banner.className = "mt-3 px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-semibold flex items-center gap-2 w-full justify-center text-center border ";
+            if (type === "success") banner.className += "bg-emerald-950/80 text-emerald-300 border-emerald-500/40";
+            else if (type === "error") banner.className += "bg-rose-950/80 text-rose-300 border-rose-500/40";
+            else if (type === "warning") banner.className += "bg-amber-950/80 text-amber-300 border-amber-500/40";
+            else banner.className += "bg-slate-900/90 text-sky-300 border-sky-500/30";
+        }
+
+        function updateStepLoopTracker(stepNum) {
+            for (let i = 1; i <= 5; i++) {
+                const el = document.getElementById(`loop-step-${i}`);
+                if (i === stepNum) {
+                    el.className = "p-1 rounded-lg text-sky-400 font-bold bg-sky-950/60 border border-sky-500/40";
+                } else {
+                    el.className = "p-1 rounded-lg text-slate-400";
+                }
+            }
+        }
+
+        /* ======================================================================
+         * 8. VICTORY & STAR RATING EVALUATION
+         * ====================================================================== */
+        function triggerVictoryModal() {
+            const lvl = PREBUILT_LEVELS[currentLevelIndex];
+            const blockCount = commands.length;
+
+            let stars = 1;
+            if (blockCount <= lvl.star3Count) stars = 3;
+            else if (blockCount <= lvl.star2Count) stars = 2;
+
+            document.getElementById('victory-level-title').innerText = `${lvl.name}`;
+            
+            // Set Star Icons
+            for (let i = 1; i <= 3; i++) {
+                const starEl = document.getElementById(`star-${i}`);
+                if (i <= stars) {
+                    starEl.className = "fa-solid fa-star text-amber-400 animate-pulse";
+                } else {
+                    starEl.className = "fa-solid fa-star text-slate-700";
+                }
+            }
+
+            document.getElementById('victory-stat-box').innerHTML = `
+                <div>บล็อกคำสั่งที่คุณใช้: <strong class="text-sky-400">${blockCount} บล็อก</strong></div>
+                <div>เกณฑ์ 3 ดาว: <= ${lvl.star3Count} บล็อก | เกณฑ์ 2 ดาว: <= ${lvl.star2Count} บล็อก</div>
+            `;
+
+            const modal = document.getElementById('modal-victory');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+        }
+
+        function closeVictoryModal() {
+            const modal = document.getElementById('modal-victory');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function nextLevel() {
+            closeVictoryModal();
+            if (currentLevelIndex + 1 < PREBUILT_LEVELS.length) {
+                loadLevel(currentLevelIndex + 1);
+            } else {
+                loadLevel(0); // Loop back to level 1
+            }
+        }
+
+        /* ======================================================================
+         * 9. LEVEL EDITOR LOGIC
+         * ====================================================================== */
+        function initEditorGrid() {
+            customGrid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill('EMPTY'));
+            renderEditorGrid();
+        }
+
+        function setEditorTool(tool) {
+            editorTool = tool;
+            ['ROBOT', 'WALL', 'PARCEL', 'DELIVERY', 'ERASER'].forEach(t => {
+                const btn = document.getElementById(`tool-btn-${t}`);
+                if (t === tool) {
+                    btn.className = "p-3 rounded-xl bg-sky-950 border-2 border-sky-400 text-sky-300 flex items-center gap-3";
+                } else {
+                    btn.className = "p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-3";
+                }
+            });
+        }
+
+        function renderEditorGrid() {
+            const container = document.getElementById('editor-grid-container');
+            container.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+            container.style.gridTemplateRows = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+            container.innerHTML = '';
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'grid-cell rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-xl cursor-pointer hover:border-sky-400 transition';
+                    
+                    const item = customGrid[r][c];
+                    if (item === 'WALL') cellDiv.innerHTML = '🧱';
+                    else if (item === 'PARCEL') cellDiv.innerHTML = '📦';
+                    else if (item === 'DELIVERY') cellDiv.innerHTML = '📮';
+                    else if (item === 'ROBOT') cellDiv.innerHTML = '🤖';
+
+                    cellDiv.onclick = () => {
+                        playSynthSound('step');
+                        if (editorTool === 'ERASER') customGrid[r][c] = 'EMPTY';
+                        else if (editorTool === 'ROBOT') {
+                            // Clear previous robot location
+                            for (let i = 0; i < GRID_SIZE; i++) {
+                                for (let j = 0; j < GRID_SIZE; j++) {
+                                    if (customGrid[i][j] === 'ROBOT') customGrid[i][j] = 'EMPTY';
+                                }
+                            }
+                            customGrid[r][c] = 'ROBOT';
+                        } else customGrid[r][c] = editorTool;
+                        renderEditorGrid();
+                    };
+
+                    container.appendChild(cellDiv);
+                }
+            }
+        }
+
+        function clearCustomGrid() {
+            initEditorGrid();
+        }
+
+        function testCustomLevel() {
+            let robPos = null;
+            let parcels = [];
+            let deliveries = [];
+            let walls = [];
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const item = customGrid[r][c];
+                    if (item === 'ROBOT') robPos = { r, c, dir: 1 };
+                    else if (item === 'PARCEL') parcels.push({ r, c });
+                    else if (item === 'DELIVERY') deliveries.push({ r, c });
+                    else if (item === 'WALL') walls.push({ r, c });
+                }
+            }
+
+            if (!robPos || parcels.length === 0 || deliveries.length === 0) {
+                setStatus("⚠️ ด่านสร้างเองต้องมี หุ่นยนต์ 🤖 พัสดุ 📦 และจุดส่งของ 📮 ให้ครบ!", "error");
+                return;
+            }
+
+            const customLvlObj = {
+                id: 99,
+                name: "ด่านที่สร้างเอง (Custom Level)",
+                desc: "ทดสอบด่านที่คุณออกแบบเองด้วย Computational Thinking!",
+                star3Count: 8,
+                star2Count: 12,
+                robot: robPos,
+                parcels,
+                deliveries,
+                walls
+            };
+
+            PREBUILT_LEVELS[4] = customLvlObj; // Assign to Level slot 5
+            switchTab('game');
+            loadLevel(4);
+        }
+
+        window.onload = () => {
+            initLevelButtons();
+            loadLevel(0);
+        };
+    </script>
+</body>
+</html>
